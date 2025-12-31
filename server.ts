@@ -3,10 +3,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-import { createUserTable, addDummyUser, getUserBalance } from "./DynamoService";
+import { createTables, getUserBalance, transact } from "./DynamoService";
+import { TransactionType } from "./types";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
@@ -47,8 +51,51 @@ app.get("/user/:userId/balance", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/user/:userId/transact", async (req: Request, res: Response) => {
+  try {
+    const { idempotentKey, amount, type } = req.body;
+    const userId = req.params.userId;
+
+    if (!idempotentKey || !amount || !type || !userId) {
+      return res.status(400).json({
+        message: "missing required fields",
+        status: "error",
+      });
+    }
+
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      return res.status(400).json({
+        message: "Amount must be a positive number",
+        status: "error",
+      });
+    }
+
+    if (type !== TransactionType.CREDIT && type !== TransactionType.DEBIT) {
+      return res.status(400).json({
+        message: "Type must be either 'credit' or 'debit'",
+        status: "error",
+      });
+    }
+
+    const result = await transact(userId, amountNum, type, idempotentKey);
+
+    if (result.status === "error") {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      status: "error",
+      error: error,
+    });
+  }
+});
+
 async function startServer() {
-  await createUserTable();
+  await createTables();
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });
