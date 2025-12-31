@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+*.md
+__tests__
+jest.config.js
+*.test.ts
+docker-compose.yml
+start.sh
+

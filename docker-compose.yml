@@ -1,0 +1,24 @@
+version: "3.8"
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: jacksclub-dynamodb
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+
+  app:
+    build: .
+    container_name: dynamo-transaction-app
+    ports:
+      - "3000:3000"
+    environment:
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ENDPOINT=http://dynamodb:8000
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-test}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-test}
+      - PORT=${PORT:-3000}
+    depends_on:
+      - dynamodb
+    restart: unless-stopped

@@ -18,7 +18,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-app.get("/user/:userId/balance", async (req: Request, res: Response) => {
+app.get("/users/:userId/balance", async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
     if (!userId) {
@@ -51,7 +51,7 @@ app.get("/user/:userId/balance", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/user/:userId/transact", async (req: Request, res: Response) => {
+app.post("/users/:userId/transact", async (req: Request, res: Response) => {
   try {
     const { idempotentKey, amount, type } = req.body;
     const userId = req.params.userId;
